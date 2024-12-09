@@ -8,13 +8,13 @@ screen = turtle.Screen()
 screen.bgcolor("black")
 screen.title("Interactive Solar System Simulation")
 screen.setup(width=1.0, height=1.0)
-screen.tracer(0)  # Disable automatic screen updates for smoother animation
+screen.tracer(0)  
 
 # Create the Sun
 sun = turtle.Turtle()
 sun.shape("circle")
 sun.color("yellow")
-sun.shapesize(3)  # Enlarge the Sun
+sun.shapesize(2.7) 
 sun.penup()
 
 # Add background stars
@@ -41,6 +41,7 @@ def create_planet_label(planet):
     label.write(planet.name, align="center", font=("Arial", 10, "bold"))
     return label
 
+# Create planets
 class Planet(turtle.Turtle):
     def __init__(self, name, radius, color, speed, size):
         super().__init__(shape="circle")
@@ -52,16 +53,106 @@ class Planet(turtle.Turtle):
         self.color(self.c)
         self.penup()
         self.angle = random.uniform(0, 2 * pi)
-        self.label = create_planet_label(self)
+        self.label = turtle.Turtle(visible=False)
+        self.label.hideturtle()
+        self.label.penup()
+        self.label.color("white")
 
     def move(self):
         x = self.radius * cos(self.angle)
         y = self.radius * sin(self.angle)
         self.goto(sun.xcor() + x, sun.ycor() + y)
         self.angle += self.speed
-        self.label.clear()
-        self.label.goto(self.xcor(), self.ycor() + 15)
-        self.label.write(self.name, align="center", font=("Arial", 10, "bold"))
+        if self.label.isvisible():
+            self.label.clear()
+            self.label.goto(self.xcor(), self.ycor() + 15)
+            self.label.write(self.name, align="center", font=("Arial", 10, "bold"))
+            
+# Hover detection function
+def check_hover():
+    # Get cursor position in the window's coordinate system
+    mouse_x = screen.cv.winfo_pointerx() - screen.cv.winfo_rootx() - screen.window_width() // 2
+    mouse_y = screen.window_height() // 2 - (screen.cv.winfo_pointery() - screen.cv.winfo_rooty())
+
+    for planet in myList:
+        if planet.distance(mouse_x, mouse_y) < 20:
+            if not planet.label.isvisible():
+                planet.label.showturtle()
+                planet.label.clear()
+                planet.label.goto(planet.xcor(), planet.ycor() + 15)
+                planet.label.write(planet.name, align="center", font=("Arial", 10, "bold"))
+        else:
+            if planet.label.isvisible():
+                planet.label.hideturtle()
+                planet.label.clear()
+
+    # Schedule the next check
+    screen.ontimer(check_hover, 100)
+
+
+details_turtle = turtle.Turtle()
+details_turtle.hideturtle()
+details_turtle.penup()
+details_turtle.color("white")
+
+def show_planet_details(planet):
+    details_turtle.clear()
+
+    # Move details popup to the bottom-right corner
+    popup_x = screen.window_width() // 2 - 270
+    popup_y = -screen.window_height() // 2 + 50
+    details_turtle.goto(popup_x, popup_y)
+    
+    # Draw a background rectangle for the popup
+    details_turtle.fillcolor("white")
+    details_turtle.begin_fill()
+    for _ in range(2):
+        details_turtle.forward(240)
+        details_turtle.left(90)
+        details_turtle.forward(120)
+        details_turtle.left(90)
+    details_turtle.end_fill()
+
+    # Add the planet's "image" as a small circle
+    details_turtle.penup()
+    details_turtle.goto(popup_x + 30, popup_y + 70)
+    details_turtle.shape("circle")
+    details_turtle.shapesize(2)
+    details_turtle.color(planet.c)
+    details_turtle.stamp()
+
+    # Write the planet details
+    details_turtle.penup()
+    details_turtle.goto(popup_x + 80, popup_y+20)
+    details_turtle.color("black")  # Change font color to black
+    details_text = (
+        f"Planet: {planet.name}\n"
+        f"Orbit Radius: {planet.radius} units\n"
+        f"Color: {planet.c}\n"
+        f"Orbital Speed: {planet.speed:.4f}"
+    )
+    details_turtle.write(details_text, align="left", font=("Arial", 12, "normal"))
+
+# Function to clear the details popup
+def clear_details(x, y):
+    details_turtle.clear()
+
+# Bind the clear functionality to a click anywhere on the screen
+screen.onclick(clear_details)
+
+# Function to detect planet click
+def detect_planet_click(x, y):
+    for planet in myList:
+        if planet.distance(x, y) < 20:  # Check if clicked near a planet
+            show_planet_details(planet)
+            screen.ontimer(details_turtle.clear, 5000) # Clear the details popup after 5sec if no click is done.
+            break
+    else:
+        clear_details(x, y)  # Clear details if no planet is clicked
+
+# Bind the updated click event
+screen.onclick(detect_planet_click)
+
         
 class AsteroidBeltObject(turtle.Turtle):
     def __init__(self, radius, color="gray"):
@@ -89,7 +180,7 @@ class KuiperBeltObject(turtle.Turtle):
         self.radius = radius
         self.angle = random.uniform(0, 2 * pi)
         self.color(color)
-        self.shapesize(0.2)  # Make Kuiper Belt objects small
+        self.shapesize(0.2) 
         self.penup()
 
     def move(self):
@@ -121,53 +212,34 @@ class Ring:
             ring_turtle.circle(radius)
             ring_turtle.penup()
 
-def show_planet_details(planet):
-    details_screen = turtle.Screen()
-    details_screen.bgcolor("black")
-    details_screen.title(f"{planet.name} Details")
-    details_turtle = turtle.Turtle()
-    details_turtle.hideturtle()
-    details_turtle.color("white")
-    details_turtle.penup()
-    details_turtle.goto(0, 100)
-    details_turtle.write(
-        f"Name: {planet.name}\nRadius: {planet.radius} units\nColor: {planet.c}\nSpeed: {planet.speed:.3f}",
-        align="center",
-        font=("Arial", 16, "bold"),
-    )
-    details_screen.mainloop()
 
-def on_click(x, y):
-    for planet in myList:
-        if planet.distance(x, y) < 20:
-            show_planet_details(planet)
-
-# Bind click event
-screen.onclick(on_click)
 
 # Create planets
-mercury = Planet("Mercury", 40, "grey", 0.005, 0.5)
-venus = Planet("Venus", 80, "orange", 0.003, 0.8)
-earth = Planet("Earth", 100, "blue", 0.001, 1)
-mars = Planet("Mars", 150, "red", 0.0007, 0.6)
-jupiter = Planet("Jupiter", 200, "brown", 0.002, 2)
-saturn = Planet("Saturn", 230, "pink", 0.0018, 1.5)
-uranus = Planet("Uranus", 250, "light blue", 0.0016, 1.2)
-neptune = Planet("Neptune", 280, "purple", 0.0005, 1.1)
+mercury = Planet("Mercury", 50, "grey", 0.005, 0.5)
+venus = Planet("Venus", 90, "orange", 0.003, 0.8)
+earth = Planet("Earth", 130, "blue", 0.001, 1)
+mars = Planet("Mars", 160, "red", 0.0007, 0.6)
+jupiter = Planet("Jupiter", 240, "brown", 0.002, 1.8)
+saturn = Planet("Saturn", 290, "pink", 0.0018, 1.5)
+uranus = Planet("Uranus", 340, "light blue", 0.0016, 1.2)
+neptune = Planet("Neptune", 370, "purple", 0.0005, 1.1)
 
 myList = [mercury, venus, earth, mars, jupiter, saturn, uranus, neptune]
 
+# Bind hover functionality
+check_hover()
+
 # Create Kuiper Belt objects
 kuiper_belt = []
-for _ in range(50):
-    radius = random.uniform(300, 400)
+for _ in range(200):
+    radius = random.uniform(400, 450)  # Adjusted range for a smaller belt
     kbo = KuiperBeltObject(radius)
     kuiper_belt.append(kbo)
 
 # Create Asteroid Belt objects
 asteroid_belt = []
-for _ in range(100):  # 100 objects in the Asteroid Belt
-    radius = random.uniform(160, 170)  # Random distance between Mars and Jupiter
+for _ in range(200):  # 100 objects in the Asteroid Belt
+    radius = random.uniform(180, 190)  # Random distance between Mars and Jupiter
     asteroid = AsteroidBeltObject(radius)
     asteroid_belt.append(asteroid)
 
@@ -182,5 +254,5 @@ while True:
     for kbo in kuiper_belt:
         kbo.move()
     for asteroid in asteroid_belt:
-        asteroid.move()  # Move each asteroid
+        asteroid.move()
     saturn_rings.move()
