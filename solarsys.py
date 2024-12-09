@@ -1,19 +1,20 @@
 import turtle
 from math import *
 import random
+import time
 
 # Create the screen
 screen = turtle.Screen()
 screen.bgcolor("black")
 screen.title("Interactive Solar System Simulation")
 screen.setup(width=1.0, height=1.0)
-screen.tracer(0)
+screen.tracer(0)  # Disable automatic screen updates for smoother animation
 
 # Create the Sun
 sun = turtle.Turtle()
 sun.shape("circle")
 sun.color("yellow")
-sun.shapesize(3)
+sun.shapesize(3)  # Enlarge the Sun
 sun.penup()
 
 # Add background stars
@@ -22,13 +23,24 @@ def create_starry_sky():
     star.hideturtle()
     star.penup()
     star.color("white")
-    for _ in range(100):
+    for _ in range(100):  # Number of stars
         x = random.randint(-800, 800)
         y = random.randint(-600, 600)
         star.goto(x, y)
         star.dot(random.randint(2, 4))
 
 create_starry_sky()
+
+# Create planet orbits with matching colors
+def create_orbit(radius, color):
+    orbit = turtle.Turtle()
+    orbit.hideturtle()
+    orbit.speed(0)
+    orbit.color(color)
+    orbit.penup()
+    orbit.goto(0, -radius)
+    orbit.pendown()
+    orbit.circle(radius)
 
 class Planet(turtle.Turtle):
     def __init__(self, name, radius, color, speed, size):
@@ -41,16 +53,7 @@ class Planet(turtle.Turtle):
         self.color(self.c)
         self.penup()
         self.angle = random.uniform(0, 2 * pi)
-        self.label = self.create_label()
-
-    def create_label(self):
-        label = turtle.Turtle()
-        label.hideturtle()
-        label.penup()
-        label.color("white")
-        label.goto(self.xcor(), self.ycor() + 15)
-        label.write(self.name, align="center", font=("Arial", 10, "bold"))
-        return label
+        self.label = create_planet_label(self)
 
     def move(self):
         x = self.radius * cos(self.angle)
@@ -60,6 +63,41 @@ class Planet(turtle.Turtle):
         self.label.clear()
         self.label.goto(self.xcor(), self.ycor() + 15)
         self.label.write(self.name, align="center", font=("Arial", 10, "bold"))
+        
+class AsteroidBeltObject(turtle.Turtle):
+    def __init__(self, radius, color="gray"):
+        super().__init__(shape="circle")
+        self.radius = radius
+        self.angle = random.uniform(0, 2 * pi)  # Random initial angle
+        self.color(color)
+        self.shapesize(0.1)  # Make the asteroids smaller
+        self.penup()
+    
+    def move(self):
+        # Calculate the new position based on the radius and angle
+        x = self.radius * cos(self.angle)
+        y = self.radius * sin(self.angle)
+
+        # Move the object
+        self.goto(sun.xcor() + x, sun.ycor() + y)
+
+        # Slowly adjust the angle to simulate orbit
+        self.angle += random.uniform(0.002, 0.005)
+
+class KuiperBeltObject(turtle.Turtle):
+    def __init__(self, radius, color="white"):
+        super().__init__(shape="circle")
+        self.radius = radius
+        self.angle = random.uniform(0, 2 * pi)
+        self.color(color)
+        self.shapesize(0.2)  # Make Kuiper Belt objects small
+        self.penup()
+
+    def move(self):
+        x = self.radius * cos(self.angle)
+        y = self.radius * sin(self.angle)
+        self.goto(sun.xcor() + x, sun.ycor() + y)
+        self.angle += random.uniform(0.001, 0.003)
 
 class Ring:
     def __init__(self, planet, radii, color="white"):
@@ -67,7 +105,6 @@ class Ring:
         self.radii = radii
         self.color = color
         self.ring_turtles = []
-
         for radius in radii:
             ring_turtle = turtle.Turtle()
             ring_turtle.hideturtle()
@@ -101,7 +138,7 @@ class BeltObject(turtle.Turtle):
         self.goto(sun.xcor() + x, sun.ycor() + y)
         self.angle += self.speed
 
-# Create planets
+# Create planets and their orbits
 planets = [
     {"name": "Mercury", "radius": 40, "color": "grey", "speed": 0.005, "size": 0.5},
     {"name": "Venus", "radius": 80, "color": "orange", "speed": 0.003, "size": 0.8},
@@ -115,26 +152,20 @@ planets = [
 
 planet_objects = []
 for planet in planets:
+    create_orbit(planet["radius"], planet["color"])  # Draw the orbit with the planet's color
     planet_obj = Planet(**planet)
     planet_objects.append(planet_obj)
 
 # Create Saturn's rings
-saturn = planet_objects[5]  # Saturn is the 6th planet in the list
 saturn_rings = Ring(saturn, [10, 15, 20], color="white")
-
-# Create asteroid belt (between Mars and Jupiter)
-asteroid_belt = [BeltObject(radius=random.uniform(160, 180)) for _ in range(100)]
-
-# Create Kuiper Belt (beyond Neptune)
-kuiper_belt = [BeltObject(radius=random.uniform(300, 400)) for _ in range(50)]
 
 # Main simulation loop
 while True:
     screen.update()
-    for planet in planet_objects:
+    for planet in myList:
         planet.move()
-    saturn_rings.move()
-    for asteroid in asteroid_belt:
-        asteroid.move()
     for kbo in kuiper_belt:
         kbo.move()
+    for asteroid in asteroid_belt:
+        asteroid.move()  # Move each asteroid
+    saturn_rings.move()
