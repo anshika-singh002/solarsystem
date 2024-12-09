@@ -30,17 +30,6 @@ def create_starry_sky():
 
 create_starry_sky()
 
-# Create planet orbits with matching colors
-def create_orbit(radius, color):
-    orbit = turtle.Turtle()
-    orbit.hideturtle()
-    orbit.speed(0)
-    orbit.color(color)
-    orbit.penup()
-    orbit.goto(0, -radius)
-    orbit.pendown()
-    orbit.circle(radius)
-
 class Planet(turtle.Turtle):
     def __init__(self, name, radius, color, speed, size):
         super().__init__(shape="circle")
@@ -112,7 +101,7 @@ class BeltObject(turtle.Turtle):
         self.goto(sun.xcor() + x, sun.ycor() + y)
         self.angle += self.speed
 
-# Create planets and their orbits
+# Create planets
 planets = [
     {"name": "Mercury", "radius": 40, "color": "grey", "speed": 0.005, "size": 0.5},
     {"name": "Venus", "radius": 80, "color": "orange", "speed": 0.003, "size": 0.8},
@@ -126,7 +115,6 @@ planets = [
 
 planet_objects = []
 for planet in planets:
-    create_orbit(planet["radius"], planet["color"])  # Draw the orbit with the planet's color
     planet_obj = Planet(**planet)
     planet_objects.append(planet_obj)
 
