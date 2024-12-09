@@ -31,16 +31,15 @@ def create_starry_sky():
 
 create_starry_sky()
 
-# Create planet orbits with matching colors
-def create_orbit(radius, color):
-    orbit = turtle.Turtle()
-    orbit.hideturtle()
-    orbit.speed(0)
-    orbit.color(color)
-    orbit.penup()
-    orbit.goto(0, -radius)
-    orbit.pendown()
-    orbit.circle(radius)
+# Create labels for planets
+def create_planet_label(planet):
+    label = turtle.Turtle()
+    label.hideturtle()
+    label.penup()
+    label.color("white")
+    label.goto(planet.xcor(), planet.ycor() + 15)
+    label.write(planet.name, align="center", font=("Arial", 10, "bold"))
+    return label
 
 class Planet(turtle.Turtle):
     def __init__(self, name, radius, color, speed, size):
@@ -122,39 +121,55 @@ class Ring:
             ring_turtle.circle(radius)
             ring_turtle.penup()
 
-class BeltObject(turtle.Turtle):
-    def __init__(self, radius, color="gray", size=0.2, speed_range=(0.002, 0.005)):
-        super().__init__(shape="circle")
-        self.radius = radius
-        self.angle = random.uniform(0, 2 * pi)
-        self.color(color)
-        self.shapesize(size)
-        self.penup()
-        self.speed = random.uniform(*speed_range)
+def show_planet_details(planet):
+    details_screen = turtle.Screen()
+    details_screen.bgcolor("black")
+    details_screen.title(f"{planet.name} Details")
+    details_turtle = turtle.Turtle()
+    details_turtle.hideturtle()
+    details_turtle.color("white")
+    details_turtle.penup()
+    details_turtle.goto(0, 100)
+    details_turtle.write(
+        f"Name: {planet.name}\nRadius: {planet.radius} units\nColor: {planet.c}\nSpeed: {planet.speed:.3f}",
+        align="center",
+        font=("Arial", 16, "bold"),
+    )
+    details_screen.mainloop()
 
-    def move(self):
-        x = self.radius * cos(self.angle)
-        y = self.radius * sin(self.angle)
-        self.goto(sun.xcor() + x, sun.ycor() + y)
-        self.angle += self.speed
+def on_click(x, y):
+    for planet in myList:
+        if planet.distance(x, y) < 20:
+            show_planet_details(planet)
 
-# Create planets and their orbits
-planets = [
-    {"name": "Mercury", "radius": 40, "color": "grey", "speed": 0.005, "size": 0.5},
-    {"name": "Venus", "radius": 80, "color": "orange", "speed": 0.003, "size": 0.8},
-    {"name": "Earth", "radius": 100, "color": "blue", "speed": 0.001, "size": 1},
-    {"name": "Mars", "radius": 150, "color": "red", "speed": 0.0007, "size": 0.6},
-    {"name": "Jupiter", "radius": 180, "color": "brown", "speed": 0.002, "size": 2},
-    {"name": "Saturn", "radius": 230, "color": "pink", "speed": 0.0018, "size": 1.5},
-    {"name": "Uranus", "radius": 250, "color": "light blue", "speed": 0.0016, "size": 1.2},
-    {"name": "Neptune", "radius": 280, "color": "purple", "speed": 0.0005, "size": 1.1},
-]
+# Bind click event
+screen.onclick(on_click)
 
-planet_objects = []
-for planet in planets:
-    create_orbit(planet["radius"], planet["color"])  # Draw the orbit with the planet's color
-    planet_obj = Planet(**planet)
-    planet_objects.append(planet_obj)
+# Create planets
+mercury = Planet("Mercury", 40, "grey", 0.005, 0.5)
+venus = Planet("Venus", 80, "orange", 0.003, 0.8)
+earth = Planet("Earth", 100, "blue", 0.001, 1)
+mars = Planet("Mars", 150, "red", 0.0007, 0.6)
+jupiter = Planet("Jupiter", 200, "brown", 0.002, 2)
+saturn = Planet("Saturn", 230, "pink", 0.0018, 1.5)
+uranus = Planet("Uranus", 250, "light blue", 0.0016, 1.2)
+neptune = Planet("Neptune", 280, "purple", 0.0005, 1.1)
+
+myList = [mercury, venus, earth, mars, jupiter, saturn, uranus, neptune]
+
+# Create Kuiper Belt objects
+kuiper_belt = []
+for _ in range(50):
+    radius = random.uniform(300, 400)
+    kbo = KuiperBeltObject(radius)
+    kuiper_belt.append(kbo)
+
+# Create Asteroid Belt objects
+asteroid_belt = []
+for _ in range(100):  # 100 objects in the Asteroid Belt
+    radius = random.uniform(160, 170)  # Random distance between Mars and Jupiter
+    asteroid = AsteroidBeltObject(radius)
+    asteroid_belt.append(asteroid)
 
 # Create Saturn's rings
 saturn_rings = Ring(saturn, [10, 15, 20], color="white")
