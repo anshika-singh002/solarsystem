@@ -1,9 +1,8 @@
 import turtle
-from math import *
+from math import cos, sin, pi
 import random
-import time
 
-# Create the screen
+# Initialize the screen
 screen = turtle.Screen()
 screen.bgcolor("black")
 screen.title("Interactive Solar System Simulation")
@@ -14,170 +13,141 @@ screen.tracer(0)
 sun = turtle.Turtle()
 sun.shape("circle")
 sun.color("yellow")
-sun.shapesize(2.7)
+sun.shapesize(3.0)
 sun.penup()
 
-# Add background stars
+# Create the starry sky
 def create_starry_sky():
-    star = turtle.Turtle()
-    star.hideturtle()
+    star = turtle.Turtle(visible=False)
     star.penup()
     star.color("white")
     for _ in range(100):
-        x = random.randint(-800, 800)
-        y = random.randint(-600, 600)
-        star.goto(x, y)
+        star.goto(random.randint(-800, 800), random.randint(-600, 600))
         star.dot(random.randint(2, 4))
 
 create_starry_sky()
 
-# Create labels for planets
-def create_planet_label(planet):
-    label = turtle.Turtle()
-    label.hideturtle()
-    label.penup()
-    label.color("white")
-    label.goto(planet.xcor(), planet.ycor() + 15)
-    label.write(planet.name, align="center", font=("Arial", 10, "bold"))
-    return label
-
-# Create planet class
+# Planet class
 class Planet(turtle.Turtle):
     def __init__(self, name, radius, color, speed, size):
         super().__init__(shape="circle")
         self.name = name
         self.radius = radius
-        self.c = color
+        self.color(color)
         self.speed = speed
         self.shapesize(size)
-        self.color(self.c)
         self.penup()
         self.angle = random.uniform(0, 2 * pi)
         self.label = turtle.Turtle(visible=False)
-        self.label.hideturtle()
         self.label.penup()
         self.label.color("white")
+        self.moons = []
 
     def move(self):
-        x = self.radius * cos(self.angle)
-        y = self.radius * sin(self.angle)
-        self.goto(sun.xcor() + x, sun.ycor() + y)
+        self.goto(sun.xcor() + self.radius * cos(self.angle), sun.ycor() + self.radius * sin(self.angle))
         self.angle += self.speed
+        self.update_label()
+        for moon in self.moons:
+            moon.move(self.xcor(), self.ycor())
+
+    def update_label(self):
         if self.label.isvisible():
             self.label.clear()
             self.label.goto(self.xcor(), self.ycor() + 15)
             self.label.write(self.name, align="center", font=("Arial", 10, "bold"))
 
-# Hover detection function
+class Moon(turtle.Turtle):
+    def __init__(self, name, radius, color, speed, size):
+        super().__init__(shape="circle")
+        self.name = name
+        self.radius = radius
+        self.color(color)
+        self.speed = speed
+        self.shapesize(size)
+        self.penup()
+        self.angle = random.uniform(0, 2 * pi)
+
+    def move(self, planet_x, planet_y):
+        self.goto(planet_x + self.radius * cos(self.angle), planet_y + self.radius * sin(self.angle))
+        self.angle += self.speed
+
+# Handle hover detection
 def check_hover():
     mouse_x = screen.cv.winfo_pointerx() - screen.cv.winfo_rootx() - screen.window_width() // 2
     mouse_y = screen.window_height() // 2 - (screen.cv.winfo_pointery() - screen.cv.winfo_rooty())
-    for planet in myList:
+    for planet in planets:
         if planet.distance(mouse_x, mouse_y) < 20:
-            if not planet.label.isvisible():
-                planet.label.showturtle()
-                planet.label.clear()
-                planet.label.goto(planet.xcor(), planet.ycor() + 15)
-                planet.label.write(planet.name, align="center", font=("Arial", 10, "bold"))
+            planet.label.showturtle()
+            planet.update_label()
         else:
-            if planet.label.isvisible():
-                planet.label.hideturtle()
-                planet.label.clear()
+            planet.label.hideturtle()
+            planet.label.clear()
     screen.ontimer(check_hover, 100)
 
 # Show planet details
-details_turtle = turtle.Turtle()
-details_turtle.hideturtle()
-details_turtle.penup()
-details_turtle.color("white")
-
 def show_planet_details(planet):
-    details_turtle.clear()
-    popup_x = screen.window_width() // 2 - 270
-    popup_y = -screen.window_height() // 2 + 50
-    details_turtle.goto(popup_x, popup_y)
-    details_turtle.fillcolor("white")
-    details_turtle.begin_fill()
+    details.clear()
+    popup_x, popup_y = screen.window_width() // 2 - 270, -screen.window_height() // 2 + 50
+    details.goto(popup_x, popup_y)
+    details.fillcolor("white")
+    details.begin_fill()
     for _ in range(2):
-        details_turtle.forward(240)
-        details_turtle.left(90)
-        details_turtle.forward(120)
-        details_turtle.left(90)
-    details_turtle.end_fill()
-    details_turtle.goto(popup_x + 30, popup_y + 70)
-    details_turtle.shape("circle")
-    details_turtle.shapesize(2)
-    details_turtle.color(planet.c)
-    details_turtle.stamp()
-    details_turtle.goto(popup_x + 80, popup_y + 20)
-    details_turtle.color("black")
-    details_text = (
-        f"Planet: {planet.name}\n"
-        f"Orbit Radius: {planet.radius} units\n"
-        f"Color: {planet.c}\n"
-        f"Orbital Speed: {planet.speed:.4f}"
-    )
-    details_turtle.write(details_text, align="left", font=("Arial", 12, "normal"))
+        details.forward(240)
+        details.left(90)
+        details.forward(120)
+        details.left(90)
+    details.end_fill()
+    details.goto(popup_x + 30, popup_y + 70)
+    details.shape("circle")
+    details.shapesize(2)
+    details.color(planet.fillcolor())
+    details.stamp()
+    details.goto(popup_x + 80, popup_y + 20)
+    details.color("black")
+    details.write(f"Planet: {planet.name}\nOrbit Radius: {planet.radius} units\nColor: {planet.fillcolor()}\nOrbital Speed: {planet.speed:.4f}", 
+                  align="left", font=("Arial", 12, "normal"))
 
-def clear_details(x, y):
-    details_turtle.clear()
+def clear_details(*_):
+    details.clear()
 
+# Click detection
 screen.onclick(clear_details)
-
 def detect_planet_click(x, y):
-    for planet in myList:
+    for planet in planets:
         if planet.distance(x, y) < 20:
             show_planet_details(planet)
-            screen.ontimer(details_turtle.clear, 5000)
             break
     else:
-        clear_details(x, y)
+        clear_details()
 
 screen.onclick(detect_planet_click)
 
-class AsteroidBeltObject(turtle.Turtle):
-    def __init__(self, radius, color="gray"):
+# Asteroid and Kuiper Belt Object classes
+class BeltObject(turtle.Turtle):
+    def __init__(self, radius, color, size, speed_range):
         super().__init__(shape="circle")
         self.radius = radius
         self.angle = random.uniform(0, 2 * pi)
         self.color(color)
-        self.shapesize(0.1)
+        self.shapesize(size)
         self.penup()
+        self.speed_range = speed_range
 
     def move(self):
-        x = self.radius * cos(self.angle)
-        y = self.radius * sin(self.angle)
-        self.goto(sun.xcor() + x, sun.ycor() + y)
-        self.angle += random.uniform(0.002, 0.005)
+        self.goto(sun.xcor() + self.radius * cos(self.angle), sun.ycor() + self.radius * sin(self.angle))
+        self.angle += random.uniform(*self.speed_range)
 
-class KuiperBeltObject(turtle.Turtle):
-    def __init__(self, radius, color="white"):
-        super().__init__(shape="circle")
-        self.radius = radius
-        self.angle = random.uniform(0, 2 * pi)
-        self.color(color)
-        self.shapesize(0.2)
-        self.penup()
-
-    def move(self):
-        x = self.radius * cos(self.angle)
-        y = self.radius * sin(self.angle)
-        self.goto(sun.xcor() + x, sun.ycor() + y)
-        self.angle += random.uniform(0.001, 0.003)
-
+# Ring class
 class Ring:
     def __init__(self, planet, radii, color="white"):
         self.planet = planet
         self.radii = radii
         self.color = color
-        self.ring_turtles = []
-        for radius in radii:
-            ring_turtle = turtle.Turtle()
-            ring_turtle.hideturtle()
+        self.ring_turtles = [(turtle.Turtle(visible=False), radius) for radius in radii]
+        for ring_turtle, _ in self.ring_turtles:
             ring_turtle.speed(0)
             ring_turtle.color(self.color)
             ring_turtle.penup()
-            self.ring_turtles.append((ring_turtle, radius))
 
     def move(self):
         planet_x, planet_y = self.planet.xcor(), self.planet.ycor()
@@ -188,35 +158,78 @@ class Ring:
             ring_turtle.circle(radius)
             ring_turtle.penup()
 
-# Create planets
-mercury = Planet("Mercury", 50, "grey", 0.005, 0.5)
-venus = Planet("Venus", 90, "orange", 0.003, 0.8)
-earth = Planet("Earth", 130, "blue", 0.001, 1)
-mars = Planet("Mars", 160, "red", 0.0007, 0.6)
-jupiter = Planet("Jupiter", 240, "brown", 0.002, 1.8)
-saturn = Planet("Saturn", 290, "pink", 0.0018, 1.5)
-uranus = Planet("Uranus", 340, "light blue", 0.0016, 1.2)
-neptune = Planet("Neptune", 370, "purple", 0.0005, 1.1)
+# Comet class
+class Comet(turtle.Turtle):
+    def __init__(self):
+        super().__init__(shape="circle")
+        self.color("white")
+        self.shapesize(0.4)
+        self.penup()
+        self.speed = random.uniform(3, 6)
+        self.angle = random.uniform(0, 2 * pi)
+        self.life_span = random.randint(100, 150)
+        self.goto(self.spawn_location())
+        self.trail = []
 
-myList = [mercury, venus, earth, mars, jupiter, saturn, uranus, neptune]
+    def spawn_location(self):
+        radius = random.uniform(400, 450)
+        angle = random.uniform(0, 2 * pi)
+        return radius * cos(angle), radius * sin(angle)
+
+    def move(self):
+        self.setx(self.xcor() - self.speed * cos(self.angle))
+        self.sety(self.ycor() - self.speed * sin(self.angle))
+        self.life_span -= 1
+        if self.life_span <= 0:
+            comets.remove(self)
+
+# Create planets
+planets = [
+    Planet("Mercury", 50, "grey", 0.005, 0.5),
+    Planet("Venus", 90, "orange", 0.003, 0.8),
+    Planet("Earth", 130, "blue", 0.001, 1),
+    Planet("Mars", 160, "red", 0.0007, 0.6),
+    Planet("Jupiter", 240, "brown", 0.002, 1.8),
+    Planet("Saturn", 290, "pink", 0.0018, 1.5),
+    Planet("Uranus", 340, "light blue", 0.0016, 1.2),
+    Planet("Neptune", 370, "purple", 0.0005, 1.1)
+]
+
+# Add moons to planets
+planets[2].moons.append(Moon("Moon", 15, "white", 0.01, 0.3))  # Earth's moon
+planets[4].moons.append(Moon("Io", 25, "yellow", 0.005, 0.4))  # Jupiter's Io
+planets[4].moons.append(Moon("Europa", 35, "white", 0.004, 0.35))  # Jupiter's Europa
+planets[5].moons.append(Moon("Titan", 30, "gold", 0.004, 0.5))  # Saturn's Titan
+planets[6].moons.append(Moon("Miranda", 20, "grey", 0.006, 0.3))  # Uranus's Miranda
+planets[7].moons.append(Moon("Triton", 25, "light grey", 0.005, 0.4))  # Neptune's Triton
+
 check_hover()
 
-# Kuiper Belt
-kuiper_belt = [KuiperBeltObject(random.uniform(400, 450)) for _ in range(200)]
+# Create belts and rings
+kuiper_belt = [BeltObject(random.uniform(400, 450), "white", 0.2, (0.001, 0.003)) for _ in range(200)]
+asteroid_belt = [BeltObject(random.uniform(180, 190), "gray", 0.1, (0.002, 0.005)) for _ in range(200)]
+saturn_rings = Ring(planets[5], [10, 15, 20])
 
-# Asteroid Belt
-asteroid_belt = [AsteroidBeltObject(random.uniform(180, 190)) for _ in range(200)]
+# Comets
+comets = []
+def spawn_comet():
+    if random.random() < 0.2:
+        comets.append(Comet())
+    screen.ontimer(spawn_comet, 500)
 
-# Saturn's rings
-saturn_rings = Ring(saturn, [10, 15, 20])
+spawn_comet()
 
-# Main simulation loop
+# Main loop
+details = turtle.Turtle(visible=False)
+details.penup()
+details.color("white")
+
 while True:
     screen.update()
-    for planet in myList:
+    for planet in planets:
         planet.move()
-    for kbo in kuiper_belt:
-        kbo.move()
-    for asteroid in asteroid_belt:
-        asteroid.move()
+    for obj in kuiper_belt + asteroid_belt:
+        obj.move()
+    for comet in comets[:]:
+        comet.move()
     saturn_rings.move()
