@@ -159,6 +159,7 @@ class Ring:
             ring_turtle.penup()
 
 # Comet class
+
 class Comet(turtle.Turtle):
     def __init__(self):
         super().__init__(shape="circle")
@@ -167,20 +168,18 @@ class Comet(turtle.Turtle):
         self.penup()
         self.speed = random.uniform(3, 6)
         self.angle = random.uniform(0, 2 * pi)
-        self.life_span = random.randint(100, 150)
-        self.goto(self.spawn_location())
-        self.trail = []
-
-    def spawn_location(self):
-        radius = random.uniform(400, 450)
-        angle = random.uniform(0, 2 * pi)
-        return radius * cos(angle), radius * sin(angle)
+        self.life_span = random.randint(50, 100)
+        self.goto(random.randint(-screen.window_width() // 2, screen.window_width() // 2), 
+                  random.randint(-screen.window_height() // 2, screen.window_height() // 2))
 
     def move(self):
-        self.setx(self.xcor() - self.speed * cos(self.angle))
-        self.sety(self.ycor() - self.speed * sin(self.angle))
+        dx = self.speed * cos(self.angle)
+        dy = self.speed * sin(self.angle)
+        self.setx(self.xcor() + dx)
+        self.sety(self.ycor() + dy)
         self.life_span -= 1
         if self.life_span <= 0:
+            self.hideturtle()
             comets.remove(self)
 
 # Create planets
