@@ -18,7 +18,7 @@ sun.penup()
 
 # Create the starry sky
 def create_starry_sky():
-    star = turtle.Turtle(visible=False)
+    star = turtle.Turtle(visible=True)
     star.penup()
     star.color("white")
     for _ in range(100):
@@ -86,27 +86,29 @@ def check_hover():
 
 # Show planet details
 def show_planet_details(planet):
-    details.clear()
-    popup_x, popup_y = screen.window_width() // 2 - 270, -screen.window_height() // 2 + 50
+    details.clear() #to clear the previous planet details
+    popup_x, popup_y = screen.window_width() // 2 - 270, -screen.window_height() // 2 + 50 #details layout position
     details.goto(popup_x, popup_y)
-    details.fillcolor("white")
-    details.begin_fill()
+    details.fillcolor("white") # bgcolor of details
+    details.begin_fill() 
     for _ in range(2):
         details.forward(240)
         details.left(90)
         details.forward(120)
         details.left(90)
     details.end_fill()
-    details.goto(popup_x + 30, popup_y + 70)
-    details.shape("circle")
+    details.goto(popup_x + 30, popup_y + 70) # made a circle here
+    details.shape("circle") 
     details.shapesize(2)
     details.color(planet.fillcolor())
     details.stamp()
-    details.goto(popup_x + 80, popup_y + 20)
+    details.goto(popup_x + 80, popup_y + 20) # filled detials at that position.
     details.color("black")
     details.write(f"Planet: {planet.name}\nOrbit Radius: {planet.radius} units\nColor: {planet.fillcolor()}\nOrbital Speed: {planet.speed:.4f}", 
                   align="left", font=("Arial", 12, "normal"))
 
+
+# when we click somewhere randomly on screen, it will remove the details tabs.
 def clear_details(*_):
     details.clear()
 
@@ -168,19 +170,29 @@ class Comet(turtle.Turtle):
         self.penup()
         self.speed = random.uniform(3, 6)
         self.angle = random.uniform(0, 2 * pi)
-        self.life_span = random.randint(50, 100)
-        self.goto(random.randint(-screen.window_width() // 2, screen.window_width() // 2), 
-                  random.randint(-screen.window_height() // 2, screen.window_height() // 2))
+        self.life_span = random.randint(300, 500)  # Long enough to traverse the solar system
+        kuiper_radius = random.uniform(400, 450)
+        self.goto(sun.xcor() + kuiper_radius * cos(self.angle), sun.ycor() + kuiper_radius * sin(self.angle))
+        # Angle toward the Sun
+        self.target_angle = self.towards(sun.xcor(), sun.ycor())
 
     def move(self):
-        dx = self.speed * cos(self.angle)
-        dy = self.speed * sin(self.angle)
+        # Adjust position towards the Sun
+        dx = self.speed * cos(self.target_angle)
+        dy = self.speed * sin(self.target_angle)
         self.setx(self.xcor() + dx)
         self.sety(self.ycor() + dy)
         self.life_span -= 1
-        if self.life_span <= 0:
+
+        # Optionally speed up slightly as it gets closer to the Sun
+        if self.distance(sun) < 200:
+            self.speed += 0.05
+
+        # Remove the comet if its life span ends or it gets too close to the Sun
+        if self.life_span <= 0 or self.distance(sun) < 10:
             self.hideturtle()
             comets.remove(self)
+
 
 # Create planets
 planets = [
@@ -212,7 +224,7 @@ saturn_rings = Ring(planets[5], [10, 15, 20])
 # Comets
 comets = []
 def spawn_comet():
-    if random.random() < 0.2:
+    if random.random() < 0.1:
         comets.append(Comet())
     screen.ontimer(spawn_comet, 500)
 
